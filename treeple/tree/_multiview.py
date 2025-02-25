@@ -286,7 +286,7 @@ class MultiViewDecisionTreeClassifier(SimMatrixMixin, DecisionTreeClassifier):
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
         class_weight=None,
-        feature_combinations=None,
+        feature_combinations=1,
         ccp_alpha=0.0,
         store_leaf_values=False,
         monotonic_cst=None,

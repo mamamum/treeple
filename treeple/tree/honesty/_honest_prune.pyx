@@ -110,7 +110,7 @@ cdef class HonestPruner(Splitter):
             The original tree to be pruned.
         """
         self.tree = orig_tree
-        self.capacity = 0
+        self.capacity = 2047
 
     cdef int init(
         self,
@@ -133,7 +133,6 @@ cdef class HonestPruner(Splitter):
         right-most end of `samples`, that is `samples[end_non_missing:end]`.
         """
         cdef float64_t threshold = self.tree.nodes[node_idx].threshold
-        cdef intp_t feature = self.tree.nodes[node_idx].feature
         cdef intp_t n_missing = 0
         cdef intp_t pos = self.start
         cdef intp_t p
@@ -147,12 +146,15 @@ cdef class HonestPruner(Splitter):
             sample_idx = self.samples[p]
 
             # missing-values are always placed at the right-most end
-            if isnan(X_ndarray[sample_idx, feature]):
+            if isnan(self.tree._compute_feature(X_ndarray, sample_idx, &self.tree.nodes[node_idx])):
                 self.samples[p], self.samples[current_end] = \
                     self.samples[current_end], self.samples[p]
-
                 n_missing += 1
                 current_end -= 1
+
+            # Leverage sklearn's forked API to compute the feature value at this split node
+            # and then compare that to the corresponding threshold
+            # Note: this enables the function to work w/ both axis-aligned and oblique splits.
             elif p > pos and (self.tree._compute_feature(X_ndarray, sample_idx, &self.tree.nodes[node_idx])<= threshold):
                 self.samples[p], self.samples[pos] = \
                     self.samples[pos], self.samples[p]
@@ -368,8 +370,12 @@ cdef _honest_prune(
             split_is_degenerate = (
                 pruner.n_left_samples() == 0 or pruner.n_right_samples() == 0
             )
+
             is_leaf_in_origtree = child_l[node_idx] == _TREE_LEAF
+
             if invalid_split or split_is_degenerate or is_leaf_in_origtree:
+                # invalid_split or is_leaf_in_origtree:
+                # or split_is_degenerate or is_leaf_in_origtree:
                 # ... and child_r[node_idx] == _TREE_LEAF:
                 #
                 # 1) if node is not degenerate, that means there are still honest-samples in

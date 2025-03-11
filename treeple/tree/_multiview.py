@@ -36,6 +36,11 @@ DENSE_SPLITTERS = {
     "best": _oblique_splitter.MultiViewSplitter,
 }
 
+OBLIQUE_DENSE_SPLITTERS = {
+    "best": _oblique_splitter.BestObliqueSplitter,
+    "random": _oblique_splitter.RandomObliqueSplitter,
+    "best-multiview": _oblique_splitter.MultiViewSplitter,
+}
 
 class MultiViewDecisionTreeClassifier(SimMatrixMixin, DecisionTreeClassifier):
     """A multi-view axis-aligned decision tree classifier.
@@ -400,7 +405,10 @@ class MultiViewDecisionTreeClassifier(SimMatrixMixin, DecisionTreeClassifier):
                 "Please convert your data to a dense array."
             )
         else:
-            SPLITTERS = DENSE_SPLITTERS
+            if self.feature_combinations_ == 1:
+                SPLITTERS = DENSE_SPLITTERS
+            else:
+                SPLITTERS = OBLIQUE_DENSE_SPLITTERS
 
         if isinstance(self._max_features_arr, (Integral, Real, str, type(None))):
             max_features_arr_ = [self._max_features_arr] * self.n_feature_sets_
@@ -561,7 +569,10 @@ class MultiViewDecisionTreeClassifier(SimMatrixMixin, DecisionTreeClassifier):
                 "Please convert your data to a dense array."
             )
         else:
-            SPLITTERS = DENSE_SPLITTERS
+            if self.feature_combinations_ == 1:
+                SPLITTERS = DENSE_SPLITTERS
+            else:
+                SPLITTERS = OBLIQUE_DENSE_SPLITTERS
         if not isinstance(self.splitter, ObliqueSplitter):
             splitter = SPLITTERS[self.splitter](
                 criterion,

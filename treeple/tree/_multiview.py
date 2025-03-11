@@ -42,6 +42,7 @@ OBLIQUE_DENSE_SPLITTERS = {
     "best-multiview": _oblique_splitter.MultiViewSplitter,
 }
 
+
 class MultiViewDecisionTreeClassifier(SimMatrixMixin, DecisionTreeClassifier):
     """A multi-view axis-aligned decision tree classifier.
 
